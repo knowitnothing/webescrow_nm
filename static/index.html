@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta name="viewport" content="initial-scale=1, user-scalable=no">
+		<style>
+			body {
+				font-family: Helvetica;
+				color: #333;
+				min-width: 500px;
+			}
+			h1 {
+				font-size: 2.25em;
+			}
+			h2 {
+				font-size: 1.5em;
+			}
+			p {
+				font-size: 0.95em;
+				line-height: 1.4em;
+				padding-left: 16px;
+			}
+			a {
+				color: #06d;
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+			.title {
+				padding-bottom: 12px;
+			}
+			.subtitle {
+				padding-bottom: 8px;
+			}
+			.wrapper {
+				max-width: 900px;
+				margin: 0 auto;
+			}
+
+			.button {
+				padding: 6px;
+			}
+			.active {
+				border-bottom: 3px solid #333;
+			}
+
+			form {
+				font-size: 1.15em;
+				border-top: 1px solid black;
+				border-bottom: 1px solid black;
+				padding: 24px;
+			}
+			label {
+				font-weight: bold;
+			}
+			input {
+				padding: 3px;
+				font-size: 1.15em;
+			}
+			legend {
+				background: white;
+				border: 1px solid #ddd;
+				padding: 6px;
+				margin: 0;
+			}
+			fieldset {
+				position: relative;
+				border: 1px solid #ddd;
+				background: #fafafa;
+				padding: 12px 0 12px 12px;
+				margin: 12px 0 12px 0;
+			}
+			#email label, #share label {
+				display: inline-block;
+				width: 100px;
+				text-align: right;
+				padding-right: 6px;
+			}
+			#email input, #share input {
+				margin-bottom: 6px;
+				width: 300px;
+			}
+			.share {
+				width: 50px;
+				text-align: right;
+			}
+
+			#status {
+				font-weight: bold;
+				border-radius: 4px;
+				padding-top: 6px;
+				padding-bottom: 6px;
+			}
+			.error {
+				background: #ecb5b5;
+				border: 1px solid #8D3131;
+				color: #8D3131;
+			}
+			.success {
+				background: #37DE80;
+				border: 1px solid #21874E;
+				color: #21874E;
+			}
+		</style>
+		<script src="static/zepto.min.js"></script>
+	</head>
+	<body>
+		<div class="wrapper">
+			<h1 class="title">Bitcoin N-M escrow</h1>
+
+			<!--<h2 class="subtitle">
+				I want to..
+				<a href="#" id="action-escrow" class="button active">Escrow</a>
+				<a href="#" id="action-recover" class="button">Recover private key</a>
+			</h2>-->
+
+			<p id="status" style="display: none"></p>
+
+			<div id="escrow">
+				<p>Start a escrow where N, of M, parties are required to
+				cooperate in order to release the private key.</p>
+
+				<form>
+					<label>N</label>
+					<input class="share" id="n-share" type="text" maxlength="3" value="2">
+					&nbsp;&nbsp;
+					<label>M</label>
+					<input class="share" id="m-share" type="text" maxlength="3" value="3">
+					&nbsp;&nbsp;
+					<a href="#" id="update-nm">Update</a>
+					<br>
+					<fieldset>
+						<legend>Email list</legend>
+
+						<div id="email">
+						</div>
+
+						<br/>
+						<input type="checkbox" id="verify-email" required="required">I have verified the email addresses, they are all correct
+					</fieldset>
+					<a href="#" id="create">Create escrow</a>
+				</form>
+
+				<p>Each participant will receive an email with a bitcoin
+				address where funds should be sent to, one share of the private
+				key, and further instructions. <i>The private key will not
+					be stored in the server.</i>
+				</p>
+
+			</div>
+
+			<div id="recover" style="display: none">
+				<p>Obtain a private key by specifying the N shares received.</p>
+				<form>
+					<label>N</label>
+					<input class="share" id="n-share-rec" type="text" maxlength="3" value="2">
+					<a href="#" id="update-n">Update</a>
+					</br>
+					<fieldset>
+						<legend>Shares</legend>
+
+						<div id="share">
+						</div>
+					</fieldset>
+					<a href="#" id="getkey">Get private key:</a>
+					<input type="text" value="" readonly id="privkey">
+				</form>
+			</div>
+
+		</div>
+		<script>
+			$('#action-escrow').click(function() {
+				$('#action-recover').removeClass('active');
+				$('#recover').hide();
+				$('#escrow').show();
+				$('#action-escrow').addClass('active');
+			});
+			$('#action-recover').click(function() {
+				$('#action-escrow').removeClass('active');
+				$('#escrow').hide();
+				$('#recover').show();
+				$('#action-recover').addClass('active');
+			});
+
+			var alert_timeout = null;
+			function show_error(msg) {
+				$('#status').addClass("error");
+				$('#status').text("Error: " + msg);
+				$('#status').show();
+				if (alert_timeout) {
+					$('#status').removeClass('success');
+					clearTimeout(alert_timeout);
+				}
+				alert_timeout = setTimeout(function() {
+					$('#status').hide();
+					alert_timeout = null;
+				}, 5 * 1000);
+			}
+			function show_success(msg) {
+				$('#status').addClass("success");
+				$('#status').text("Success: " + msg);
+				$('#status').show();
+				if (alert_timeout) {
+					$('#status').removeClass('error');
+					clearTimeout(alert_timeout);
+				}
+				alert_timeout = setTimeout(function() {
+					$('#status').hide();
+					alert_timeout = null;
+				}, 60 * 1000);
+			}
+
+			function validate_nm() {
+				var val_n = Number($('#n-share').val());
+				var val_m = Number($('#m-share').val());
+				if (isNaN(val_n) || isNaN(val_m)) {
+					show_error("Invalid value for N, M");
+					return [0, 0];
+				}
+				if (val_n < 2) {
+					show_error("N must be at least 2");
+					return [0, 0];
+				} else if (val_m < val_n) {
+					show_error("M must be at least N");
+					return [0, 0];
+				}
+				return [val_n, val_m];
+			}
+
+			$('#create').click(function() {
+				var val = validate_nm();
+				var email = [];
+				if (!val[0]) {
+					return;
+				}
+				val_n = val[0];
+				val_m = val[1];
+				for (var i = 0; i < val_m; i++) {
+					var email_i = $('#p-' + i).val().trim();
+					var name = $('#p-' + i).attr('name');
+					if (!email_i) {
+						show_error("All emails need to be filled");
+						return;
+					}
+					email.push([name, email_i]);
+				}
+				if (!$('#verify-email').prop('checked')) {
+					show_error("Please confirm that you have verified the emails");
+					return;
+				}
+				var data = JSON.stringify({n: val_n, m: val_m, email: email});
+				$.ajax({
+					type: "POST",
+					url: "/",
+					dataType: "json",
+					data: data,
+					contentType: "json",
+					success: function(data) {
+						console.log("hi there", data);
+						if (data['success']) {
+							show_success("Escrow set up, shares sent. Bitcoin address: " + data['success']);
+						} else {
+							show_error(data['error']);
+						}
+					}
+				});
+			});
+
+			function validate_n() {
+				var val_n = Number($('#n-share-rec').val());
+				if (isNaN(val_n)) {
+					show_error("Invalid value for N");
+				}
+				if (val_n < 2) {
+					show_error("Too few shares");
+					return 0;
+				}
+				return val_n;
+			}
+
+			$("#getkey").click(function () {
+				var val_n = validate_n();
+				if (!val_n) {
+					return;
+				}
+				var share = [];
+				for (var i = 1; i <= val_n; i++) {
+					share.push($('#rec-' + i).val());
+				}
+				var result = secrets.combine(share);
+				$('#privkey').val(result);
+			});
+
+			$('#update-nm').click(function() {
+				var val = validate_nm();
+				if (!val[0]) {
+					return;
+				}
+				val_n = val[0];
+				val_m = val[1];
+
+				var content = '';
+				var label = [];
+				if (val_m == 3) {
+					label.push("Escrower");
+					label.push("Buyer");
+					label.push("Seller");
+				} else {
+					for (var i = 1; i <= val_m; i++) {
+						label.push("Part " + i);
+					}
+				}
+				for (var i = 0; i < label.length; i++) {
+					var input = '<input type="text" id="p-' + i + '" name="' + label[i] + '">';
+					content += '<label>' + label[i] + '</label>' + input + '<br>';
+				}
+				$('#email').html(content);
+			});
+
+			$('#update-n').click(function() {
+				var val_n = validate_n();
+				if (!val_n) {
+					return;
+				}
+				var content = '';
+				for (var i = 1; i <= val_n; i++) {
+					content += '<label>' + i + '</label><input type="text" id="rec-' + i + '"><br>'
+				}
+				$('#share').html(content);
+			});
+
+			$('#update-nm').click();
+			$('#update-n').click();
+		</script>
+	</body>
+</html>
