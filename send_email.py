@@ -13,7 +13,6 @@ PATH = 'https://dice.gg/webescrow_nm'
 TEMPLATE_BASE = """You are receiving this message because someone
 started a bitcoin escrow at %(fromwhere)s and indicated you to
 represent %(part)s in the process.
-
 %(msg)s
 """
 TEMPLATE_BUYER = TEMPLATE_BASE % {'part': 'the buyer',
