@@ -97,7 +97,6 @@ class IndexHandler(web.RequestHandler):
 
 class GPGHandler(web.RequestHandler):
     def post(self):
-        print self.request.files, "<<"
         if 'pubkey' not in self.request.files:
             # Invalid POST
             self.write(INVALID)
