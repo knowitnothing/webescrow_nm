@@ -71,8 +71,8 @@ class IndexHandler(web.RequestHandler):
             if not use_gpg:
                 continue
             using_gpg = True
-            _, timedout = gpg.encrypt('test', recipient)
-            if timedout:
+            _, failed = gpg.encrypt('test', recipient)
+            if failed:
                 reply = {'error': 'Failed to obtain public for key %s' %
                         recipient}
                 self.write(json.dumps(reply))
@@ -95,11 +95,31 @@ class IndexHandler(web.RequestHandler):
 
         self.write(json.dumps({'success': addr, 'note': gpg_note}))
 
+class GPGHandler(web.RequestHandler):
+    def post(self):
+        print self.request.files, "<<"
+        if 'pubkey' not in self.request.files:
+            # Invalid POST
+            self.write(INVALID)
+            return
+        data = self.request.files['pubkey'][0]
+        body = data['body'].strip()
+        if len(body) > 1024 * 128:
+            self.write("Data too large, limit: 128 KiB")
+            return
+        err = gpg.import_key(body)
+        if err:
+            self.write("GPG failed to import the data")
+            return
+        self.redirect('/')
+
+
 def setup_handler(main='/'):
     zmq_ctx = zmq.Context.instance()
     zmq_sock = zmq_ctx.socket(zmq.PUSH)
     zmq_sock.connect(webcfg.zmqemail)
-    return (main, IndexHandler, dict(sock=zmq_sock))
+    return [(main, IndexHandler, dict(sock=zmq_sock)),
+            ('%sgpgkey' % main, GPGHandler)]
 
 def main():
     # Check that ssss-split exists.
@@ -110,7 +130,7 @@ def main():
     if not webcfg.using_nginx:
         static_handler.append((r'/static/(.*)',
             web.StaticFileHandler, {'path': webcfg.static_path}))
-    app = web.Application([setup_handler()] + static_handler)
+    app = web.Application(setup_handler() + static_handler)
 
     server = httpserver.HTTPServer(app, ssl_options=webcfg.ssl_conf)
     server.listen(webcfg.port, webcfg.host)

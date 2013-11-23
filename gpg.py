@@ -13,7 +13,15 @@ def encrypt(msg, recipient):
         '--keyserver-options', 'timeout=3', '--recipient', recipient, temp],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
-    timeout = 'timed out' in stderr # Very rough approximation.
+    failed = stderr.strip() != '' # Very rough approximation.
     os.remove(temp)
-    return stdout, timeout
+    return stdout, failed
 
+def import_key(pubkey):
+    temp_fd, temp = tempfile.mkstemp()
+    os.write(temp_fd, pubkey)
+    os.close(temp_fd)
+    proc = subprocess.Popen([webcfg.gpg, '--quiet', '--no-tty', '--batch',
+        '--import', temp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    return stderr.strip()

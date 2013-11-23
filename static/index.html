@@ -71,6 +71,9 @@
 				padding: 12px 0 12px 12px;
 				margin: 12px 0 12px 0;
 			}
+			#sendkey input {
+				font-size: 1em;
+			}
 			#email label, #share label {
 				display: inline-block;
 				width: 100px;
@@ -109,11 +112,13 @@
 		<div class="wrapper">
 			<h1 class="title">Bitcoin N-M escrow</h1>
 
-			<!--<h2 class="subtitle">
+			<h2 class="subtitle">
 				I want to..
 				<a href="#" id="action-escrow" class="button active">Escrow</a>
-				<a href="#" id="action-recover" class="button">Recover private key</a>
-			</h2>-->
+				<a href="#" id="action-sendkey" class="button">Send a GPG key</a>
+				<!--<a href="#" id="action-recover" class="button">Recover private key</a>
+				-->
+			</h2>
 
 			<p id="status" style="display: none"></p>
 
@@ -153,6 +158,15 @@
 
 			</div>
 
+			<div id="sendkey" style="display: none">
+				<p>Send a public GPG key if you want to receive emails encrypted with it.</p>
+				<form action="/gpgkey", enctype="multipart/form-data" method="post">
+					<label>Public key</label>
+					<input type="file" name="pubkey">
+					<input type="submit" value="Send">
+				</form>
+			</div>
+
 			<div id="recover" style="display: none">
 				<p>Obtain a private key by specifying the N shares received.</p>
 				<form>
@@ -173,17 +187,23 @@
 
 		</div>
 		<script>
+			var tab_now = 'escrow';
+			function change_tab(name) {
+				console.log(tab_now, name, "<<");
+				$('#action-' + tab_now).removeClass('active');
+				$('#' + tab_now).hide();
+				tab_now = name;
+				$('#' + tab_now).show();
+				$('#action-' + tab_now).addClass('active');
+			}
 			$('#action-escrow').click(function() {
-				$('#action-recover').removeClass('active');
-				$('#recover').hide();
-				$('#escrow').show();
-				$('#action-escrow').addClass('active');
+				change_tab('escrow');
 			});
 			$('#action-recover').click(function() {
-				$('#action-escrow').removeClass('active');
-				$('#escrow').hide();
-				$('#recover').show();
-				$('#action-recover').addClass('active');
+				change_tab('recover');
+			});
+			$('#action-sendkey').click(function() {
+				change_tab('sendkey');
 			});
 
 			var alert_timeout = null;
