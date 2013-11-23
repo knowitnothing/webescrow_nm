@@ -202,7 +202,7 @@
 			}
 			function show_success(msg) {
 				$('#status').addClass("success");
-				$('#status').text("Success: " + msg);
+				$('#status').html("Success: " + msg);
 				$('#status').show();
 				if (alert_timeout) {
 					$('#status').removeClass('error');
@@ -267,7 +267,7 @@
 							var note = data['note'];
 							var msg = "Escrow set up, shares sent. Bitcoin address: " + data['success'];
 							if (note) {
-								msg += ' ' + note
+								msg += '<br>' + note
 							}
 							show_success(msg)
 						} else {

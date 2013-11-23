@@ -89,7 +89,7 @@ def main():
 
     while True:
         print "Waiting for work"
-        note, share, addr, part, part, email, use_gpg = sock.recv_multipart()
+        note, share, addr, part, email, use_gpg = sock.recv_multipart()
         print "Got work, sending to email %s" % email
         if part.lower() == 'escrower':
             body = TEMPLATE_ESCROWER % (addr, share)
@@ -111,7 +111,7 @@ Your key:
 %s
 """ % (addr, share)}
 
-        if use_gpg:
+        if int(use_gpg):
             body_new, timedout = gpg.encrypt(body, email)
             if timedout:
                 print "GPG failed, sending in plain text: %s" % body_new

@@ -78,10 +78,10 @@ class IndexHandler(web.RequestHandler):
                 self.write(json.dumps(reply))
                 return
         if using_gpg:
-            note = ('If GPG fails for whatever reason, one or more emails will'
-                    ' be sent in plain text.')
+            gpg_note = ('If GPG fails for whatever reason, one or more emails '
+                    'will be sent in plain text.')
         else:
-            note = ''
+            gpg_note = ''
 
         # Generate a new private key, and a bitcoin address from it.
         pk, wif_pk = bitcoin.privatekey()
@@ -91,9 +91,9 @@ class IndexHandler(web.RequestHandler):
         # Send the shares by email.
         for share, email in zip(shares, data['email']):
             self.sock.send_multipart([note, share, addr,
-                email[0], email[1], email[2]])
+                email[0], email[1], str(int(email[2]))])
 
-        self.write(json.dumps({'success': addr, 'note': note}))
+        self.write(json.dumps({'success': addr, 'note': gpg_note}))
 
 def setup_handler(main='/'):
     zmq_ctx = zmq.Context.instance()
