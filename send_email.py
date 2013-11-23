@@ -112,9 +112,9 @@ Your key:
 """ % (addr, share)}
 
         if int(use_gpg):
-            body_new, timedout = gpg.encrypt(body, email)
-            if timedout:
-                print "GPG failed, sending in plain text: %s" % body_new
+            body_new, err = gpg.encrypt(body, email)
+            if err:
+                print "GPG failed, sending in plain text: %s" % err
             else:
                 body = body_new
 

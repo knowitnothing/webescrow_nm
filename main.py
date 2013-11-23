@@ -119,7 +119,7 @@ def setup_handler(main='/'):
     zmq_sock = zmq_ctx.socket(zmq.PUSH)
     zmq_sock.connect(webcfg.zmqemail)
     return [(main, IndexHandler, dict(sock=zmq_sock)),
-            ('%sgpgkey' % main, GPGHandler)]
+            ('%s/gpgkey' % main, GPGHandler)]
 
 def main():
     # Check that ssss-split exists.
