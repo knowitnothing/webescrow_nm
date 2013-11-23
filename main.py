@@ -1,7 +1,7 @@
 import os
 import zmq
 import json
-from tornado import web, ioloop, httpserver
+from tornado import web, ioloop, httpserver, escape
 
 import ssss
 import webcfg
@@ -24,7 +24,7 @@ class IndexHandler(web.RequestHandler):
     def post(self):
         # Validate input.
         try:
-            data = json.loads(self.request.body)
+            data = escape.json_decode(self.request.body)
         except Exception, e:
             print "POST failed: %s (%s)" % (e, self.request.body)
             self.write(INVALID)
@@ -58,6 +58,10 @@ class IndexHandler(web.RequestHandler):
                 print "Invalid email: %s" % e
                 self.write(INVALID)
                 return
+        note = data.get('note', u'').encode('utf8')
+        if len(note) > MAX_FIELD_LEN:
+            self.write(INVALID)
+            return
 
         # Generate a new private key, and a bitcoin address from it.
         pk, wif_pk = bitcoin.privatekey()
@@ -66,7 +70,7 @@ class IndexHandler(web.RequestHandler):
         shares = ssss.split(wif_pk, n, m)
         # Send the shares by email.
         for share, email in zip(shares, data['email']):
-            self.sock.send_multipart([share, addr, email[0], email[1]])
+            self.sock.send_multipart([note, share, addr, email[0], email[1]])
 
         self.write(json.dumps({'success': addr}))
 

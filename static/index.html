@@ -139,6 +139,9 @@
 						<br/>
 						<input type="checkbox" id="verify-email" required="required">I have verified the email addresses, they are all correct
 					</fieldset>
+					<label>Note</label>
+					<input type="text" id="note" style="width: 420px" maxlength="80" placeholder="something for remembering this escrow">
+					(optional)<br><br>
 					<a href="#" id="create">Create escrow</a>
 				</form>
 
@@ -249,7 +252,8 @@
 					show_error("Please confirm that you have verified the emails");
 					return;
 				}
-				var data = JSON.stringify({n: val_n, m: val_m, email: email});
+				var note = $('#note').val().trim();
+				var data = JSON.stringify({n: val_n, m: val_m, note: note, email: email});
 				$.ajax({
 					type: "POST",
 					url: "/",
