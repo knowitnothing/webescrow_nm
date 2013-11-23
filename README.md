@@ -9,6 +9,7 @@ ssss (http://point-at-infinity.org/ssss/),
 tornado (http://www.tornadoweb.org/),
 OpenSSL (https://www.openssl.org/),
 pyOpenSSL (https://launchpad.net/pyopenssl),
+GPG (http://gnupg.org/),
 and a SMTP server properly configured.
 
 Setup

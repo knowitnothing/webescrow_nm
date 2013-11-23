@@ -1,6 +1,7 @@
 import zmq
 import smtplib
 
+import gpg
 import webcfg
 
 # Configure the following according to your preference and server.
@@ -88,7 +89,7 @@ def main():
 
     while True:
         print "Waiting for work"
-        note, share, addr, part, email = sock.recv_multipart()
+        note, share, addr, part, part, email, use_gpg = sock.recv_multipart()
         print "Got work, sending to email %s" % email
         if part.lower() == 'escrower':
             body = TEMPLATE_ESCROWER % (addr, share)
@@ -110,7 +111,14 @@ Your key:
 %s
 """ % (addr, share)}
 
-        send(email, note, body % {'share': share})
+        if use_gpg:
+            body_new, timedout = gpg.encrypt(body, email)
+            if timedout:
+                print "GPG failed, sending in plain text: %s" % body_new
+            else:
+                body = body_new
+
+        send(email, note, body)
 
 if __name__ == "__main__":
     main()

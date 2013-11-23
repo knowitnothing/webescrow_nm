@@ -3,6 +3,7 @@ import zmq
 import json
 from tornado import web, ioloop, httpserver, escape
 
+import gpg
 import ssss
 import webcfg
 import bitcoin
@@ -42,10 +43,10 @@ class IndexHandler(web.RequestHandler):
             self.write(MISSING_EMAIL)
             return
         for item in data['email']:
-            if not isinstance(item, list) or len(item) != 2:
+            if not isinstance(item, list) or len(item) != 3:
                 self.write(INVALID)
                 return
-            if not item[0] or not item[1]:
+            if not item[0] or not item[1] or not isinstance(item[2], bool):
                 self.write(MISSING_EMAIL)
                 return
             try:
@@ -63,6 +64,25 @@ class IndexHandler(web.RequestHandler):
             self.write(INVALID)
             return
 
+        # Test GPG.
+        using_gpg = False
+        for item in data['email']:
+            recipient, use_gpg = item[1], item[2]
+            if not use_gpg:
+                continue
+            using_gpg = True
+            _, timedout = gpg.encrypt('test', recipient)
+            if timedout:
+                reply = {'error': 'Failed to obtain public for key %s' %
+                        recipient}
+                self.write(json.dumps(reply))
+                return
+        if using_gpg:
+            note = ('If GPG fails for whatever reason, one or more emails will'
+                    ' be sent in plain text.')
+        else:
+            note = ''
+
         # Generate a new private key, and a bitcoin address from it.
         pk, wif_pk = bitcoin.privatekey()
         addr = bitcoin.address(pk)
@@ -70,9 +90,10 @@ class IndexHandler(web.RequestHandler):
         shares = ssss.split(wif_pk, n, m)
         # Send the shares by email.
         for share, email in zip(shares, data['email']):
-            self.sock.send_multipart([note, share, addr, email[0], email[1]])
+            self.sock.send_multipart([note, share, addr,
+                email[0], email[1], email[2]])
 
-        self.write(json.dumps({'success': addr}))
+        self.write(json.dumps({'success': addr, 'note': note}))
 
 def setup_handler(main='/'):
     zmq_ctx = zmq.Context.instance()
