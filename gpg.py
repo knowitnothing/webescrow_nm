@@ -24,4 +24,5 @@ def import_key(pubkey):
     proc = subprocess.Popen([webcfg.gpg, '--quiet', '--no-tty', '--batch',
         '--import', temp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
+    os.remove(temp)
     return stderr.strip()
