@@ -10,6 +10,9 @@ import bitcoin
 INVALID = json.dumps({'error': 'Invalid data'})
 MISSING_EMAIL = json.dumps({'error': 'Email missing'})
 
+MAX_FIELD_LEN = 128
+MAX_NM = 64
+
 class IndexHandler(web.RequestHandler):
 
     def initialize(self, sock):
@@ -29,7 +32,7 @@ class IndexHandler(web.RequestHandler):
         try:
             n = int(data['n'])
             m = int(data['m'])
-            if n < 2 or m < n:
+            if n < 2 or m < n or m > MAX_NM or n > MAX_NM:
                 raise Exception("Invalid values for n,m")
         except Exception, e:
             print "POST failed: %s (%s, %s)" % (e, n, m)
@@ -48,6 +51,9 @@ class IndexHandler(web.RequestHandler):
             try:
                 item[0] = item[0].encode('ascii')
                 item[1] = item[1].encode('ascii')
+                if (len(item[0]) > MAX_FIELD_LEN or
+                        len(item[1]) > MAX_FIELD_LEN):
+                    raise Exception("field too long")
             except Exception, e:
                 print "Invalid email: %s" % e
                 self.write(INVALID)

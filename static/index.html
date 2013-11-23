@@ -312,7 +312,7 @@
 					}
 				}
 				for (var i = 0; i < label.length; i++) {
-					var input = '<input type="text" id="p-' + i + '" name="' + label[i] + '">';
+					var input = '<input maxlength="100" type="text" id="p-' + i + '" name="' + label[i] + '">';
 					content += '<label>' + label[i] + '</label>' + input + '<br>';
 				}
 				$('#email').html(content);
