@@ -63,7 +63,7 @@ Your key:
 
 Do not share this key with anyone else."""}
 
-def send(name, email, note, body):
+def send(email, note, body):
     subject = SUBJECT
     if note:
         subject = '%s - %s' % (subject, note)
@@ -97,20 +97,20 @@ def main():
         elif part.lower() == 'seller':
             body = TEMPLATE_SELLER % (addr, share)
         else:
-            body = TEMPLATE_GENERIC % {'part': part,
+            body = TEMPLATE_BASE % {'part': part,
                 'fromwhere': PATH, 'msg': """
-The address %s was generated for this process and it is expected
-that any funds are sent to it.
+The address %s was generated
+for this process and it is expected that any funds are sent to it.
 
-This is a custom n-m split and it is expected that you know your
-role in the process.
+This is a custom n-m split and it is assumed that you know your role in
+the process.
 
 Your key:
 
 %s
 """ % (addr, share)}
 
-        send(part, email, note, body % {'share': share})
+        send(email, note, body % {'share': share})
 
 if __name__ == "__main__":
     main()
